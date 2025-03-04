@@ -1,5 +1,6 @@
 package com.onion.backend.Contorller;
 
+import com.onion.backend.dto.SignUpUser;
 import com.onion.backend.entity.User;
 import com.onion.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +26,8 @@ public class UserController {
   }
   // 유저 생성 API
   @PostMapping("/signUp")
-  public ResponseEntity<User> createUser(@RequestParam String username,
-                         @RequestParam String password,
-                         @RequestParam String email) {
-    User user = userService.createUser(username, password, email);
+  public ResponseEntity<User> createUser(@RequestBody SignUpUser signUpUser) {
+    User user = userService.createUser(signUpUser);
     return ResponseEntity.ok(user);
   }
 
