@@ -26,4 +26,10 @@ public class UserService {
     // 새로운 유저를 데이터베이스에 저장
     return userRepository.save(newUser);
   }
+
+  // ID로 사용자 삭제
+  public void deleteUserById(Long id) {
+    userRepository.deleteById(id);
+  }
+
 }

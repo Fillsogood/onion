@@ -18,11 +18,18 @@ public class UserController {
   }
 
   // 유저 생성 API
-  @PostMapping("/create")
+  @PostMapping("")
   public ResponseEntity<User> createUser(@RequestParam String username,
                          @RequestParam String password,
                          @RequestParam String email) {
     User user = userService.createUser(username, password, email);
     return ResponseEntity.ok(user);
+  }
+
+  // ID로 사용자 삭제
+  @DeleteMapping("/{id}")
+  public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
+    userService.deleteUserById(id);
+    return ResponseEntity.ok("User deleted successfully");
   }
 }
