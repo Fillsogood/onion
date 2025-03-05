@@ -4,8 +4,13 @@ import com.onion.backend.JWT.JwtUtil;
 import com.onion.backend.dto.LoginUser;
 
 import com.onion.backend.service.UserDetailsServiceImpl;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -14,8 +19,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -33,15 +36,24 @@ public class AuthController {
 
   // 로그인 API
   @PostMapping("/login")
-  public String authenticateUser(@Valid @RequestBody LoginUser loginUser) throws AuthenticationException {
+  public ResponseEntity<String> Login(@Valid @RequestBody LoginUser loginUser, HttpServletResponse response) throws AuthenticationException {
 
     // 사용자 인증
     Authentication authentication = authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(loginUser.getUsername(), loginUser.getPassword())
     );
     UserDetails userDetails = userDetailsService.loadUserByUsername(loginUser.getUsername());
+    String token = jwtUtil.generateJwtToken(userDetails.getUsername());
 
-    return jwtUtil.generateJwtToken(userDetails.getUsername());
+    Cookie cookie = new Cookie("token", token);
+    cookie.setHttpOnly(true);
+    cookie.setSecure(false);
+    cookie.setPath("/");
+    cookie.setMaxAge(3600);
+
+    response.addCookie(cookie);
+
+    return ResponseEntity.ok(token);
   }
 
   @PostMapping("/token/validation")
