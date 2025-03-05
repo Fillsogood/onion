@@ -3,6 +3,7 @@ package com.onion.backend.Contorller;
 import com.onion.backend.dto.SignUpUser;
 import com.onion.backend.entity.User;
 import com.onion.backend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,7 @@ public class UserController {
   }
   // 유저 생성 API
   @PostMapping("/signUp")
-  public ResponseEntity<User> createUser(@RequestBody SignUpUser signUpUser) {
+  public ResponseEntity<User> createUser(@Valid @RequestBody SignUpUser signUpUser) {
     User user = userService.createUser(signUpUser);
     return ResponseEntity.ok(user);
   }
@@ -37,4 +38,5 @@ public class UserController {
     userService.deleteUserById(id);
     return ResponseEntity.ok("User deleted successfully");
   }
+
 }
