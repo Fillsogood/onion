@@ -56,6 +56,15 @@ public class AuthController {
     return ResponseEntity.ok(token);
   }
 
+  @PostMapping
+  public void logout(HttpServletResponse response){
+    Cookie cookie = new Cookie("token", null);
+    cookie.setHttpOnly(true);
+    cookie.setPath("/");
+    cookie.setMaxAge(0); // 쿠키 삭제
+    response.addCookie(cookie);
+  }
+
   @PostMapping("/token/validation")
   @ResponseStatus(HttpStatus.OK)
   public void jwtTokenValidation(@RequestParam String token) {
