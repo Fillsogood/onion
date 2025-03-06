@@ -2,6 +2,7 @@ package com.onion.backend.config;
 
 import com.onion.backend.JWT.JwtAuthenticationFilter;
 import com.onion.backend.JWT.JwtUtil;
+import com.onion.backend.service.JwtBlacklistService;
 import com.onion.backend.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -26,9 +27,13 @@ public class SecurityConfig {
   @Autowired
   private final JwtUtil jwtUtil;
 
-  public SecurityConfig(UserDetailsServiceImpl userDetailsService ,JwtUtil jwtUtil) {
+  @Autowired
+  private final JwtBlacklistService jwtBlacklistService;
+
+  public SecurityConfig(UserDetailsServiceImpl userDetailsService ,JwtUtil jwtUtil, JwtBlacklistService jwtBlacklistService) {
     this.userDetailsService = userDetailsService;
     this.jwtUtil = jwtUtil;
+    this.jwtBlacklistService = jwtBlacklistService;
   }
 
   @Bean
@@ -36,10 +41,10 @@ public class SecurityConfig {
     http
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests((requests) -> requests
-            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/api/users/signUp", "/api/auth/login").permitAll()  // Swagger UI와 API 문서에 대한 접근 허용
+            .requestMatchers("/swagger-ui/**","/swagger-resources/**","/v3/api-docs/**", "/api/users/signUp", "/api/auth/login").permitAll()  // Swagger UI와 API 문서에 대한 접근 허용
             .anyRequest().authenticated()  // 나머지 요청은 인증된 사용자만 접근 가능
         )
-        .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userDetailsService), UsernamePasswordAuthenticationFilter.class)  // 필터 등록
+        .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userDetailsService, jwtBlacklistService), UsernamePasswordAuthenticationFilter.class)  // 필터 등록
         .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);  // 세션 없음
     return http.build();
   }

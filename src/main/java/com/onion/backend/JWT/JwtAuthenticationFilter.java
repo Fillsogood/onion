@@ -1,8 +1,9 @@
 package com.onion.backend.JWT;
 
-import com.onion.backend.service.UserDetailsServiceImpl;
+import com.onion.backend.service.JwtBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,20 +22,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtUtil jwtUtil;
   private final UserDetailsService userDetailsService;
-
-  public JwtAuthenticationFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+  private JwtBlacklistService jwtBlacklistService;
+  public JwtAuthenticationFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService, JwtBlacklistService jwtBlacklistService) {
     this.jwtUtil = jwtUtil;
     this.userDetailsService = userDetailsService;
+    this.jwtBlacklistService = jwtBlacklistService;
   }
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
     String token = extractJwtToken(request);
-
-    if (token != null && jwtUtil.validateJwtToken(token)) {
-      logger.debug("JWT token is valid.");
+    if (token != null && !jwtBlacklistService.isTokenBlacklisted(token) && jwtUtil.validateJwtToken(token)) {
       String username = jwtUtil.getUsernameFromJwtToken(token);
-      logger.debug("Extracted username from JWT: {}"+ username);
       UserDetails userDetails = userDetailsService.loadUserByUsername(username);
       UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
       authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -49,6 +48,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     if (header != null && header.startsWith("Bearer ")) {
       return header.substring(7);
+    }
+
+    if(header == null){
+      Cookie[] cookies = request.getCookies();
+      if (cookies != null) {
+        for(Cookie cookie : cookies){
+          if("token".equals(cookie.getName())){
+            return cookie.getValue();
+          }
+        }
+      }
     }
 
     return null;

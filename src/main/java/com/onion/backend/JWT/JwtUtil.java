@@ -1,4 +1,5 @@
 package com.onion.backend.JWT;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Component;
@@ -24,11 +25,11 @@ public class  JwtUtil {
 
   // JWT 토큰에서 사용자명 추출
   public String getUsernameFromJwtToken(String token) {
-    return Jwts.parser()
+    Claims claims = Jwts.parser()
         .setSigningKey(jwtSecret)
         .parseClaimsJws(token)
-        .getBody()
-        .getSubject();
+        .getBody();
+       return claims.getSubject();
   }
 
   // JWT 토큰 검증
@@ -41,5 +42,14 @@ public class  JwtUtil {
     } catch (Exception e) {
       return false;
     }
+  }
+
+  // JWT 토큰에서 exp 클레임을 추출
+  public Date getExpirationFromJwtToken(String token) {
+    Claims claims = Jwts.parser()
+        .setSigningKey(jwtSecret)
+        .parseClaimsJws(token)
+        .getBody();
+    return claims.getExpiration();
   }
 }
