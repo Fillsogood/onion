@@ -1,40 +1,28 @@
 package com.onion.backend.entity;
 
-
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchConnectionDetails;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
-
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "board")
 @Getter
 @Setter
 @NoArgsConstructor
 @EntityListeners(org.springframework.data.jpa.domain.support.AuditingEntityListener.class)
-public class User {
+public class Board {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false, length = 50)
-  private String username;  // 로그인 ID
-
-  @JsonIgnore
   @Column(nullable = false)
-  private String password;  // 비밀번호
+  private String title;  // 로그인 ID
 
-  @Column(nullable = false, length = 100)
-  private String email;     // 이메일
-
-  private LocalDateTime lastLoginAt;  // 최근 로그인 시간
-
+  @Column(nullable = false)
+  private String description;  // 비밀번호
   @CreatedDate
   @Column(insertable = true)
   private LocalDateTime createdAt;  // 생성일 (최초 가입일)

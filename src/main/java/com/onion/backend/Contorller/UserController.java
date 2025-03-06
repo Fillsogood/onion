@@ -1,6 +1,6 @@
 package com.onion.backend.Contorller;
 
-import com.onion.backend.dto.SignUpUser;
+import com.onion.backend.dto.SignUpUserDto;
 import com.onion.backend.entity.User;
 import com.onion.backend.service.UserService;
 import jakarta.validation.Valid;
@@ -27,7 +27,7 @@ public class UserController {
   }
   // 유저 생성 API
   @PostMapping("/signUp")
-  public ResponseEntity<User> createUser(@Valid @RequestBody SignUpUser signUpUser) {
+  public ResponseEntity<User> createUser(@Valid @RequestBody SignUpUserDto signUpUser) {
     User user = userService.createUser(signUpUser);
     return ResponseEntity.ok(user);
   }

@@ -1,8 +1,9 @@
 package com.onion.backend.Contorller;
 
 import com.onion.backend.JWT.JwtUtil;
-import com.onion.backend.dto.LoginUser;
 
+
+import com.onion.backend.dto.LoginUserDto;
 import com.onion.backend.service.JwtBlacklistService;
 import com.onion.backend.service.UserDetailsServiceImpl;
 import jakarta.servlet.http.Cookie;
@@ -44,7 +45,7 @@ public class AuthController {
 
   // 로그인 API
   @PostMapping("/login")
-  public ResponseEntity<String> Login(@Valid @RequestBody LoginUser loginUser, HttpServletResponse response) throws AuthenticationException {
+  public ResponseEntity<String> Login(@Valid @RequestBody LoginUserDto loginUser, HttpServletResponse response) throws AuthenticationException {
 
     // 사용자 인증
     Authentication authentication = authenticationManager.authenticate(

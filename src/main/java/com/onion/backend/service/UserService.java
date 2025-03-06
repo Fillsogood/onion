@@ -1,7 +1,8 @@
 package com.onion.backend.service;
 
 
-import com.onion.backend.dto.SignUpUser;
+
+import com.onion.backend.dto.SignUpUserDto;
 import com.onion.backend.entity.User;
 import com.onion.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ public class UserService {
   }
 
   // 유저 생성 메서드
-  public User createUser(SignUpUser signUpUser ) {
+  public User createUser(SignUpUserDto signUpUser ) {
     User newUser = new User();
     newUser.setUsername(signUpUser.getUsername());
     newUser.setPassword(passwordEncoder.encode(signUpUser.getPassword()));

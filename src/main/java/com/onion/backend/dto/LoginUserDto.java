@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class LoginUser {
+public class LoginUserDto {
 
   @NotBlank(message = "아이디를 입력해주세요.") //컨트롤러에서 바로 Validation
   private String username;

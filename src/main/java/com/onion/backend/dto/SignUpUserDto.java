@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 
 @Getter
-public class SignUpUser {
+public class SignUpUserDto {
 
   @NotBlank(message = "아이디를 입력해주세요.")  // 비어있지 않은 값 필수
   private String username;
