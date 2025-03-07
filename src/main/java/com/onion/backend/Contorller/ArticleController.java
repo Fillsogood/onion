@@ -27,7 +27,7 @@ public class ArticleController {
   }
 
   @PostMapping("/{boardId}/articles")
-  public ResponseEntity<Article> writeArticle(@RequestBody WriteArticleDto writeArticleDto){
+  public ResponseEntity<Article> writeArticle(@RequestBody WriteArticleDto writeArticleDto, @PathVariable Long boardId) {
     // 현재 인증된 사용자 정보 가져오기
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -35,6 +35,26 @@ public class ArticleController {
       return ResponseEntity.status(401).build(); // 인증되지 않은 사용자 처리
     }
 
-    return ResponseEntity.ok(articleService.writeArticle(writeArticleDto));
+    return ResponseEntity.ok(articleService.writeArticle(writeArticleDto, boardId));
   }
+
+  @GetMapping("/{boardId}/articles")
+  public ResponseEntity<List<Article>> getArticles(@PathVariable Long boardId,
+                                                   @RequestParam(required = false) Long lastId,
+                                                   @RequestParam(required = false) Long firstId){
+    if(lastId != null){
+      return ResponseEntity.ok(articleService.getOldArticle(boardId, lastId));
+    }
+    if(firstId != null){
+      return ResponseEntity.ok(articleService.getNewArticle(boardId, firstId));
+    }
+    return ResponseEntity.ok(articleService.firstGetArticle(boardId));
+  }
+
+  @PutMapping("/{boardId}/articles/{articleId}")
+  public ResponseEntity<Article> editArticles(@PathVariable Long boardId,@PathVariable Long articleId,
+                                                    @RequestBody WriteArticleDto writeArticleDto){
+    return ResponseEntity.ok(articleService.editArticle(boardId,writeArticleDto, articleId));
+  }
+
 }
