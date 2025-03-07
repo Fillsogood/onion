@@ -30,6 +30,9 @@ public class Article {
   @JoinColumn(foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
   private User author;
 
+  @Column(nullable = false)
+  private Boolean isDeleted = false;
+
   @ManyToOne
   @JsonIgnore
   @JoinColumn(foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))

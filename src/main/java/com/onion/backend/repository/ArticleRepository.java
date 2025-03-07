@@ -12,15 +12,15 @@ import java.util.Optional;
 
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, Long> {
-  List<Article> findTop10ByBoardIdOrderByCreatedAtDesc(@Param("boardId") Long boardId);
+  List<Article> findTop10ByBoardIdAndIsDeletedFalseOrderByCreatedAtDesc(@Param("boardId") Long boardId);
 
-  List<Article> findTop10ByBoardIdAndIdLessThanOrderByCreatedAtDesc(
+  List<Article> findTop10ByBoardIdAndIdLessThanAndIsDeletedFalseOrderByCreatedAtDesc(
       @Param("boardId") Long boardId, @Param("id") Long id);
 
-  List<Article> findTop10ByBoardIdAndIdGreaterThanOrderByCreatedAtAsc(
+  List<Article> findTop10ByBoardIdAndIdGreaterThanAndIsDeletedFalseOrderByCreatedAtAsc(
       @Param("boardId") Long boardId, @Param("id") Long id);
-
   Optional<Article> findTopByAuthorUsernameOrderByCreatedAtDesc(@Param("username") String username);
+
   Optional<Article> findTopByAuthorUsernameOrderByUpdatedAtDesc(@Param("username") String username);
 
 

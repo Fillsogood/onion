@@ -3,6 +3,7 @@ package com.onion.backend.Contorller;
 import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.entity.Article;
 import com.onion.backend.entity.User;
+import com.onion.backend.repository.ArticleRepository;
 import com.onion.backend.service.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +20,13 @@ public class ArticleController {
 
   private final AuthenticationManager authenticationManager;
   private final ArticleService articleService;
+  private final ArticleRepository articleRepository;
 
   @Autowired
-  public ArticleController(ArticleService articleService, AuthenticationManager authenticationManager) {
+  public ArticleController(ArticleService articleService, AuthenticationManager authenticationManager, ArticleRepository articleRepository) {
     this.articleService = articleService;
     this.authenticationManager = authenticationManager;
+    this.articleRepository = articleRepository;
   }
 
   @PostMapping("/{boardId}/articles")
@@ -57,4 +60,9 @@ public class ArticleController {
     return ResponseEntity.ok(articleService.editArticle(boardId,writeArticleDto, articleId));
   }
 
+  @DeleteMapping("/{boardId}/articles/{articleId}")
+  public ResponseEntity<String> deleteArticle(@PathVariable Long boardId,@PathVariable Long articleId){
+    articleService.deleteArticle(boardId,articleId);
+    return ResponseEntity.ok("Delete article");
+  }
 }
