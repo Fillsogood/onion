@@ -1,8 +1,7 @@
-package com.onion.backend.Contorller;
+package com.onion.backend.contorller;
 
 import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.entity.Article;
-import com.onion.backend.entity.User;
 import com.onion.backend.repository.ArticleRepository;
 import com.onion.backend.service.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;

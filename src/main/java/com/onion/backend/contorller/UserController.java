@@ -1,4 +1,4 @@
-package com.onion.backend.Contorller;
+package com.onion.backend.contorller;
 
 import com.onion.backend.dto.SignUpUserDto;
 import com.onion.backend.entity.User;

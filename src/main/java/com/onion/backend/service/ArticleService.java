@@ -39,10 +39,12 @@ public class ArticleService {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-    // 사용자가 5분 내에 글을 작성했는지 검사
-    if(!this.isLastWriteArticle()){
-      throw new RateLimitException("article not write by rate limit");
+    // 수정 시간 체크
+    long remainingTime = getRemainingWriteCooldown(userDetails.getUsername());
+    if (remainingTime > 0) {
+      throw new RateLimitException("You can edit this article in " + remainingTime + " minutes.");
     }
+
     // 현재 로그인한 사용자 찾기
     User author = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new ResourcNotFoundException("Author not found"));
@@ -50,6 +52,7 @@ public class ArticleService {
     // 게시판 존재 여부 확인
     Board board = boardRepository.findById(boardId)
         .orElseThrow(() -> new ResourcNotFoundException("Board with id " + boardId + " not found"));
+
 
     // 새로운 게시글 생성 및 저장
     Article article = new Article();
@@ -80,6 +83,7 @@ public class ArticleService {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     UserDetails userDetails = (UserDetails) authentication.getPrincipal();
     String author = userDetails.getUsername();
+
     // 현재 로그인한 사용자 찾기
     userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new ResourcNotFoundException("Author not found"));
@@ -96,9 +100,10 @@ public class ArticleService {
       throw new ForbiddenException("Author different from article author");
     }
 
-    // 현재 사용자가 마지막으로 수정한 글인지 확인 & 5분 제한 체크
-    if (!isLastEditArticle(author, article)) {
-      throw new RateLimitException("Article edit rate limit exceeded.");
+    // 수정 시간 체크
+    long remainingTime = getRemainingEditCooldown(author, article);
+    if (remainingTime > 0) {
+      throw new RateLimitException("You can edit this article in " + remainingTime + " minutes.");
     }
 
     if(!writeArticleDto.getTitle().isEmpty()){
@@ -124,6 +129,7 @@ public class ArticleService {
     boardRepository.findById(boardId)
         .orElseThrow(() -> new ResourcNotFoundException("Board with id " + boardId + " not found"));
 
+    // 게시글 존재 여부 확인
     Article article = articleRepository.findById(articleId)
         .orElseThrow(() -> new ResourcNotFoundException("Article with id " + articleId + " not found"));
 
@@ -132,43 +138,47 @@ public class ArticleService {
       throw new ForbiddenException("Author different from article author");
     }
 
-    // 삭제 속도 체크
-    if(!this.isLastWriteArticle()){
-      throw new RateLimitException("article not write by rate limit");
+    // 수정 시간 체크
+    long remainingTime = getRemainingEditCooldown(author, article);
+    if (remainingTime > 0) {
+      throw new RateLimitException("You can edit this article in " + remainingTime + " minutes.");
     }
+
     article.setIsDeleted(true);
     articleRepository.save(article);
-    // TODO : 삭제 로직
     return true;
 
   }
 
   // 사용자가 마지막으로 작성한 글이 5분 이상 지났는지 검증
-  private boolean isLastWriteArticle() {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-    return articleRepository.findTopByAuthorUsernameOrderByCreatedAtDesc(userDetails.getUsername())
-        .map(article -> this.isDifferenceMoreThanFiveMinutes(article.getCreatedAt()))
-        .orElse(true);
+  public long getRemainingWriteCooldown(String username) {
+    return articleRepository.findTopByAuthorUsernameOrderByCreatedAtDesc(username)
+        .map(lastWrittenArticle -> {
+          if (lastWrittenArticle.getCreatedAt() != null) {
+            return this.getRemainingCooldownTime(lastWrittenArticle.getCreatedAt());
+          }
+          return 0L; // 바로 작성 가능
+        })
+        .orElse(0L); // 최근 작성된 글이 없으면 바로 작성 가능
   }
 
   //사용자가 마지막으로 수정한 글인지 확인하고, 5분 이상 지났는지 검증
-  private boolean isLastEditArticle(String username, Article article) {
+  public long getRemainingEditCooldown(String username, Article article) {
     return articleRepository.findTopByAuthorUsernameOrderByUpdatedAtDesc(username)
-        .map(lastEditedArticle -> lastEditedArticle.getId().equals(article.getId()) &&
-            lastEditedArticle.getUpdatedAt() != null &&
-            this.isDifferenceMoreThanFiveMinutes(lastEditedArticle.getUpdatedAt()))
-        .orElse(false);
+        .map(lastEditedArticle -> {
+          if (lastEditedArticle.getId().equals(article.getId()) && lastEditedArticle.getUpdatedAt() != null) {
+            return this.getRemainingCooldownTime(lastEditedArticle.getUpdatedAt());
+          }
+          return 0L; // 바로 수정 가능
+        })
+        .orElse(0L); // 최근 수정된 글이 없으면 바로 수정 가능
   }
 
   //특정 시간(localDateTime)이 현재 시간보다 5분 이상 지났는지 확인
-  public boolean isDifferenceMoreThanFiveMinutes(LocalDateTime localDateTime) {
+  public long getRemainingCooldownTime(LocalDateTime lastUpdatedTime) {
     LocalDateTime now = LocalDateTime.now();
-    Duration duration = Duration.between(localDateTime, now);
-
-    return duration.toMinutes() >= 5; // 5분 이상 지나야 true (수정 가능)
+    Duration duration = Duration.between(lastUpdatedTime, now);
+    long elapsedMinutes = duration.toMinutes();
+    return Math.max(5 - elapsedMinutes, 0); // 5분 이상 지났으면 0 반환
   }
-
-
 }
