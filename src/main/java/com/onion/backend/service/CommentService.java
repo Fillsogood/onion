@@ -13,6 +13,7 @@ import com.onion.backend.repository.ArticleRepository;
 import com.onion.backend.repository.BoardRepository;
 import com.onion.backend.repository.UserRepository;
 import com.onion.backend.repository.CommentRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,7 +39,7 @@ public class CommentService {
     this.userRepository = userRepository;
     this.commentRepository = commentRepository;
   }
-
+  @Transactional
   public Comment writeComment(WriteCommentDto writeCommentDto, Long articleId) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -53,9 +54,14 @@ public class CommentService {
     User author = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new ResourcNotFoundException("Author not found"));
 
-    // // 게시글 존재 여부 확인
+    // 게시글 존재 여부 확인
     Article article = articleRepository.findById(articleId)
         .orElseThrow(() -> new ResourcNotFoundException("Article with id " + articleId + " not found"));
+
+    // 게시글 삭제 여부 확인
+    if(article.getIsDeleted()) {
+      throw new ForbiddenException("Article with id " + articleId + " is deleted");
+    }
 
     // 새로운 댓글 생성 및 저장
     Comment comment = new Comment();
