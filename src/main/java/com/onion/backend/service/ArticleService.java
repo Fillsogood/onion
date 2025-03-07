@@ -13,6 +13,7 @@ import com.onion.backend.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -81,6 +82,7 @@ public class ArticleService {
     return articleRepository.findTop10ByBoardIdAndIdGreaterThanAndIsDeletedFalseOrderByCreatedAtAsc(boardId, articleId);
   }
 
+
   @Transactional
   public Article editArticle(Long boardId, WriteArticleDto writeArticleDto, Long articleId) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -95,6 +97,7 @@ public class ArticleService {
     boardRepository.findById(boardId)
         .orElseThrow(() -> new ResourcNotFoundException("Board with id " + boardId + " not found"));
 
+    // 게시글 존재 여부 확인
     Article article = articleRepository.findById(articleId)
         .orElseThrow(() -> new ResourcNotFoundException("Article with id " + articleId + " not found"));
 

@@ -3,7 +3,9 @@ package com.onion.backend.contorller;
 import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.entity.Article;
 import com.onion.backend.repository.ArticleRepository;
+import com.onion.backend.repository.CommentRepository;
 import com.onion.backend.service.ArticleService;
+import com.onion.backend.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,20 +14,19 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/boards")
 public class ArticleController {
 
-  private final AuthenticationManager authenticationManager;
   private final ArticleService articleService;
-  private final ArticleRepository articleRepository;
+  private final CommentService commentService;
 
   @Autowired
-  public ArticleController(ArticleService articleService, AuthenticationManager authenticationManager, ArticleRepository articleRepository) {
+  public ArticleController(ArticleService articleService, CommentService commentService) {
     this.articleService = articleService;
-    this.authenticationManager = authenticationManager;
-    this.articleRepository = articleRepository;
+    this.commentService = commentService;
   }
 
   @PostMapping("/{boardId}/articles")
@@ -63,5 +64,11 @@ public class ArticleController {
   public ResponseEntity<String> deleteArticle(@PathVariable Long boardId,@PathVariable Long articleId){
     articleService.deleteArticle(boardId,articleId);
     return ResponseEntity.ok("Delete article");
+  }
+
+  @GetMapping("/{boardId}/articles/{articleId}")
+  public ResponseEntity<Article> getArticleWithComment(@PathVariable Long boardId, @PathVariable Long articleId){
+    Article article = commentService.getArticleWithComment(articleId,boardId).join();
+    return ResponseEntity.ok(article);
   }
 }
