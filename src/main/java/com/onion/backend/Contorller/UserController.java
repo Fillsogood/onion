@@ -39,4 +39,11 @@ public class UserController {
     return ResponseEntity.ok("User deleted successfully");
   }
 
+  // ID로 특정 유저 조회
+  @GetMapping("/{id}")
+  public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    User user = userService.getUserById(id).get();
+    return ResponseEntity.ok(user);
+  }
+
 }

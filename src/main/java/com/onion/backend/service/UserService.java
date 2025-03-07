@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -39,7 +40,13 @@ public class UserService {
     userRepository.deleteById(id);
   }
 
+  // 유저 전체 조회
   public List<User> getUsers() {
     return userRepository.findAll();
+  }
+
+  // 특정 id 유저 조회
+  public Optional<User> getUserById(Long id) {
+    return userRepository.findById(id);
   }
 }
