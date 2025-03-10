@@ -34,10 +34,10 @@ public class CommentController {
                                               @RequestBody WriteCommentDto writeCommentDto,@PathVariable Long commentId){
     return ResponseEntity.ok(commentService.editComment(boardId,writeCommentDto, articleId, commentId));
   }
-//
-//  @DeleteMapping("/{boardId}/articles/{articleId}")
-//  public ResponseEntity<String> deleteArticle(@PathVariable Long boardId,@PathVariable Long articleId){
-//    articleService.deleteArticle(boardId,articleId);
-//    return ResponseEntity.ok("Delete article");
-//  }
+
+  @DeleteMapping("/{boardId}/articles/{articleId}/{commentId}")
+  public ResponseEntity<String> deleteArticle(@PathVariable Long boardId,@PathVariable Long articleId,@PathVariable Long commentId){
+    commentService.deleteComment(boardId,articleId,commentId);
+    return ResponseEntity.ok("Delete comment");
+  }
 }

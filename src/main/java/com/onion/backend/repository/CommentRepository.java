@@ -17,10 +17,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
   @Query("SELECT c FROM Comment c JOIN c.author u WHERE u.username = :username AND c.isDeleted = false ORDER BY c.updatedAt DESC limit 1")
   Optional<Comment> findTopByAuthorUsernameOrderByUpdatedAtDesc(@Param("username") String username);
 
-//  // 특정 게시글(articleId)에 작성된 댓글 중, 삭제되지 않은 댓글을 최신순(내림차순)으로 10개 조회
-//  @Query("SELECT c FROM Comment c WHERE c.article.id = :articleId AND c.isDeleted = false ORDER BY c.createdAt DESC")
-//  List<Comment> findTop10ByArticleIdAndIsDeletedFalseOrderByCreatedAtDesc(@Param("articleId") Long articleId);
-
   @Query("SELECT c FROM Comment c WHERE c.article.id = :articleId AND c.isDeleted = false ")
   List<Comment> findAllByArticle(@Param("articleId") Long articleId);
 }

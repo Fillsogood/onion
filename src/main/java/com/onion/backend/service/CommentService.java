@@ -102,7 +102,7 @@ public class CommentService {
     }
 
     // 수정 시간 체크
-    long remainingTime = getRemainingEditCooldown(userDetails.getUsername(),comment);
+    long remainingTime = getRemainingEditCooldown(author,comment);
     if (remainingTime > 0) {
       throw new RateLimitException("You can edit this comment in " + remainingTime + " minutes.");
     }
@@ -134,6 +134,45 @@ public class CommentService {
     }
 
     return CompletableFuture.completedFuture(article);
+  }
+
+  @Transactional
+  public boolean deleteComment(Long boardId, Long articleId, Long commentId) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+    String author = userDetails.getUsername();
+
+    // 현재 로그인한 사용자 찾기
+    userRepository.findByUsername(userDetails.getUsername())
+        .orElseThrow(() -> new ResourcNotFoundException("Author not found"));
+
+    // 게시판 존재 여부 확인
+    boardRepository.findById(boardId)
+        .orElseThrow(() -> new ResourcNotFoundException("Board with id " + boardId + " not found"));
+
+    // 게시글 존재 여부 확인
+    articleRepository.findById(articleId)
+        .orElseThrow(() -> new ResourcNotFoundException("Article with id " + articleId + " not found"));
+
+    // 댓글 존재 여부 확인
+    Comment comment = commentRepository.findById(commentId)
+        .orElseThrow(() -> new ResourcNotFoundException("Comment with id " + commentId + " not found"));
+
+    // 현재 사용자가 댓글 작성자와 일치하는지 확인 (403 Forbidden)
+    if (!comment.getAuthor().getUsername().equals(author)) {
+      throw new ForbiddenException("You are not the author of this comment.");
+    }
+
+    // 수정 시간 체크
+    long remainingTime = getRemainingEditCooldown(author,comment);
+    if (remainingTime > 0) {
+      throw new RateLimitException("You can edit this comment in " + remainingTime + " minutes.");
+    }
+
+    comment.setIsDeleted(true);
+    commentRepository.save(comment);
+    return true;
+
   }
 
   @Async
