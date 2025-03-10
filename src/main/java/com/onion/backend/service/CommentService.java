@@ -163,8 +163,8 @@ public class CommentService {
       throw new ForbiddenException("You are not the author of this comment.");
     }
 
-    // 수정 시간 체크
-    long remainingTime = getRemainingEditCooldown(author,comment);
+    // 삭제 시간 체크
+    long remainingTime = getRemainingDeleteCooldown(author);
     if (remainingTime > 0) {
       throw new RateLimitException("You can edit this comment in " + remainingTime + " minutes.");
     }
@@ -216,6 +216,18 @@ public class CommentService {
         })
         .orElse(0L); // 최근 수정된 글이 없으면 바로 수정 가능
   }
+
+  public long getRemainingDeleteCooldown(String username) {
+    return commentRepository.findTopByAuthorUsernameAndIsDeletedTrueOrderByUpdatedAtDesc(username) // 최근 삭제된 댓글
+        .map(lastDeletedComment -> {
+          if (lastDeletedComment.getUpdatedAt() != null) {
+            return this.getRemainingCooldownTime(lastDeletedComment.getUpdatedAt());
+          }
+          return 0L; // 바로 삭제 가능
+        })
+        .orElse(0L); // 최근 삭제된 댓글이 없으면 바로 삭제 가능
+  }
+
 
   //특정 시간(localDateTime)이 현재 시간보다 5분 이상 지났는지 확인
   public long getRemainingCooldownTime(LocalDateTime lastUpdatedTime) {

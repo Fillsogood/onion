@@ -19,4 +19,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
   @Query("SELECT c FROM Comment c WHERE c.article.id = :articleId AND c.isDeleted = false ")
   List<Comment> findAllByArticle(@Param("articleId") Long articleId);
+
+  @Query("SELECT c FROM Comment c WHERE c.author.username = :username AND c.isDeleted = true ORDER BY c.updatedAt DESC limit 1")
+  Optional<Comment> findTopByAuthorUsernameAndIsDeletedTrueOrderByUpdatedAtDesc(@Param("username") String username);
+
 }
