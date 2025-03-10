@@ -1,6 +1,8 @@
 package com.onion.backend.contorller;
 
+import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.dto.WriteCommentDto;
+import com.onion.backend.entity.Article;
 import com.onion.backend.entity.Comment;
 import com.onion.backend.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,24 +28,12 @@ public class CommentController {
     return ResponseEntity.ok(commentService.writeComment(writeCommentDto,articleId));
   }
 
-//  @GetMapping("/comment/{commentId}")
-//  public ResponseEntity<List<Article>> getArticles(@PathVariable Long boardId,
-//                                                   @RequestParam(required = false) Long lastId,
-//                                                   @RequestParam(required = false) Long firstId){
-//    if(lastId != null){
-//      return ResponseEntity.ok(articleService.getOldArticle(boardId, lastId));
-//    }
-//    if(firstId != null){
-//      return ResponseEntity.ok(articleService.getNewArticle(boardId, firstId));
-//    }
-//    return ResponseEntity.ok(articleService.firstGetArticle(boardId));
-//  }
 
-//  @PutMapping("/{boardId}/articles/{articleId}")
-//  public ResponseEntity<Article> editArticles(@PathVariable Long boardId,@PathVariable Long articleId,
-//                                              @RequestBody WriteArticleDto writeArticleDto){
-//    return ResponseEntity.ok(articleService.editArticle(boardId,writeArticleDto, articleId));
-//  }
+  @PutMapping("/{boardId}/articles/{articleId}/{commentId}")
+  public ResponseEntity<Comment> editComment(@PathVariable Long boardId, @PathVariable Long articleId,
+                                              @RequestBody WriteCommentDto writeCommentDto,@PathVariable Long commentId){
+    return ResponseEntity.ok(commentService.editComment(boardId,writeCommentDto, articleId, commentId));
+  }
 //
 //  @DeleteMapping("/{boardId}/articles/{articleId}")
 //  public ResponseEntity<String> deleteArticle(@PathVariable Long boardId,@PathVariable Long articleId){
