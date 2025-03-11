@@ -29,7 +29,7 @@ public class Article {
   private String content;  // 비밀번호
 
   @Column(nullable = false)
-  private Long viewCount;
+  private Long viewCount = 0L;
 
   @ManyToOne
   @JoinColumn(foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))

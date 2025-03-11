@@ -30,15 +30,17 @@ public class CommentService {
   private final ArticleRepository articleRepository;
   private final BoardRepository boardRepository;
   private final UserRepository userRepository;
-
   private final CommentRepository commentRepository;
 
+  private final ElasticSearchService elasticSearchService;
+
   @Autowired
-  public CommentService(ArticleRepository articleRepository, BoardRepository boardRepository, UserRepository userRepository, CommentRepository commentRepository) {
+  public CommentService(ArticleRepository articleRepository, BoardRepository boardRepository, UserRepository userRepository, CommentRepository commentRepository, ElasticSearchService elasticSearchService) {
     this.articleRepository = articleRepository;
     this.boardRepository = boardRepository;
     this.userRepository = userRepository;
     this.commentRepository = commentRepository;
+    this.elasticSearchService = elasticSearchService;
   }
   @Transactional
   public Comment writeComment(WriteCommentDto writeCommentDto, Long articleId) {
@@ -182,21 +184,35 @@ public class CommentService {
   @Async
   @Transactional
   public CompletableFuture<Article> getArticleWithComment(Long articleId, Long boardId) {
+    // 비동기적으로 게시글 및 댓글 가져오기
     CompletableFuture<Article> getArticleResult = this.getArticle(articleId, boardId);
     CompletableFuture<List<Comment>> getCommentsResult = this.getComments(articleId);
 
-
-    // thenCombineAsync() 사용 비동기적으로 article과 comments를 병렬로 가져오고 조합
-    // 조회수 증가를 최종 단계에서 적용 (데이터 일관성 유지)
-    return getArticleResult.thenCombineAsync(getCommentsResult, (article, comments) -> {
-      article.setComments(comments);
-      return article;
-    }).thenApplyAsync(article -> {
-          article.setViewCount(article.getViewCount() + 1);
-          articleRepository.save(article);  // 비동기적으로 업데이트
+    return getArticleResult
+        .thenCombineAsync(getCommentsResult, (article, comments) -> {
+          article.setComments(comments);
           return article;
-    });
+        })
+        .thenApply(article -> {
+          // 조회수 증가는 트랜잭션 내에서 실행 (트랜잭션 보장)
+          article.setViewCount(article.getViewCount() + 1);
+          return articleRepository.save(article); // 저장을 thenApply() 내에서 실행
+        })
+        .thenCompose(article -> {
+          // Elasticsearch 색인 작업을 `CompletableFuture` 체인에 포함
+          return elasticSearchService.indexArticle(article)
+              .toFuture() // `Mono`를 `CompletableFuture`로 변환
+              .thenApply(indexResult -> {
+                System.out.println("Elasticsearch index success: " + indexResult);
+                return article;
+              })
+              .exceptionally(error -> {
+                System.err.println("Elasticsearch index failed: " + error.getMessage());
+                return article; // Elasticsearch 실패해도 서비스 정상 동작
+              });
+        });
   }
+
 
 
 

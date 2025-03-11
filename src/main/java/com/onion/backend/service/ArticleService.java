@@ -13,15 +13,16 @@ import com.onion.backend.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 @Service
@@ -29,12 +30,14 @@ public class ArticleService {
   private final ArticleRepository articleRepository;
   private final BoardRepository boardRepository;
   private final UserRepository userRepository;
+  private final ElasticSearchService elasticSearchService;
 
   @Autowired
-  public ArticleService(ArticleRepository articleRepository, BoardRepository boardRepository, UserRepository userRepository) {
+  public ArticleService(ArticleRepository articleRepository, BoardRepository boardRepository, UserRepository userRepository, ElasticSearchService elasticSearchService) {
     this.articleRepository = articleRepository;
     this.boardRepository = boardRepository;
     this.userRepository = userRepository;
+    this.elasticSearchService = elasticSearchService;
   }
 
   @Transactional
@@ -64,6 +67,13 @@ public class ArticleService {
     article.setTitle(writeArticleDto.getTitle());
     article.setContent(writeArticleDto.getContent());
     articleRepository.save(article);
+
+    // 🔹 Elasticsearch 색인 (비동기 실행)
+    elasticSearchService.indexArticle(article)
+        .subscribe(
+            result -> System.out.println("Elasticsearch index success: " + result),
+            error -> System.err.println("Elasticsearch index failed: " + error.getMessage()) //예외 처리 추가
+        );
     return article;
   }
 
@@ -119,6 +129,11 @@ public class ArticleService {
       article.setContent(writeArticleDto.getContent());
     }
     articleRepository.save(article);
+    elasticSearchService.indexArticle(article)
+        .subscribe(
+            result -> System.out.println("Elasticsearch index success: " + result),
+            error -> System.err.println("Elasticsearch index failed: " + error.getMessage()) // 예외 처리 추가
+        );
     return article;
   }
 
@@ -153,6 +168,11 @@ public class ArticleService {
 
     article.setIsDeleted(true);
     articleRepository.save(article);
+    elasticSearchService.indexArticle(article)
+        .subscribe(
+            result -> System.out.println("Elasticsearch index success: " + result),
+            error -> System.err.println("Elasticsearch index failed: " + error.getMessage()) // 예외 처리 추가
+        );
     return true;
   }
 
@@ -186,5 +206,16 @@ public class ArticleService {
     Duration duration = Duration.between(lastUpdatedTime, now);
     long elapsedMinutes = duration.toMinutes();
     return Math.max(5 - elapsedMinutes, 0); // 5분 이상 지났으면 0 반환
+  }
+
+  public List<Article> searchArticle(String keyword) {
+      Mono<List<Long>> articleIds = elasticSearchService.articleSearch(keyword);
+    try {
+      return articleRepository.findAllById(articleIds.toFuture().get());
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
