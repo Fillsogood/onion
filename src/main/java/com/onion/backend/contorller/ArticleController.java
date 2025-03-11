@@ -2,19 +2,15 @@ package com.onion.backend.contorller;
 
 import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.entity.Article;
-import com.onion.backend.repository.ArticleRepository;
-import com.onion.backend.repository.CommentRepository;
 import com.onion.backend.service.ArticleService;
 import com.onion.backend.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/boards")

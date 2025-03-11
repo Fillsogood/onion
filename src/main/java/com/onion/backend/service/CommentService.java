@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 
@@ -172,7 +171,6 @@ public class CommentService {
     comment.setIsDeleted(true);
     commentRepository.save(comment);
     return true;
-
   }
 
   @Async
@@ -180,14 +178,23 @@ public class CommentService {
     return CompletableFuture.completedFuture(commentRepository.findAllByArticle(articleId));
   }
 
+  // 게시글의 댓글 가져오기 비동기를 사용하여 2개 sql문 사용
+  @Async
+  @Transactional
   public CompletableFuture<Article> getArticleWithComment(Long articleId, Long boardId) {
     CompletableFuture<Article> getArticleResult = this.getArticle(articleId, boardId);
     CompletableFuture<List<Comment>> getCommentsResult = this.getComments(articleId);
 
-    // thenCombine()을 사용하여 두 개의 결과를 조합하여 반환
-    return getArticleResult.thenCombine(getCommentsResult, (article, comments) -> {
+
+    // thenCombineAsync() 사용 비동기적으로 article과 comments를 병렬로 가져오고 조합
+    // 조회수 증가를 최종 단계에서 적용 (데이터 일관성 유지)
+    return getArticleResult.thenCombineAsync(getCommentsResult, (article, comments) -> {
       article.setComments(comments);
       return article;
+    }).thenApplyAsync(article -> {
+          article.setViewCount(article.getViewCount() + 1);
+          articleRepository.save(article);  // 비동기적으로 업데이트
+          return article;
     });
   }
 
@@ -217,6 +224,7 @@ public class CommentService {
         .orElse(0L); // 최근 수정된 글이 없으면 바로 수정 가능
   }
 
+  // 삭제시 1분 limit
   public long getRemainingDeleteCooldown(String username) {
     return commentRepository.findTopByAuthorUsernameAndIsDeletedTrueOrderByUpdatedAtDesc(username) // 최근 삭제된 댓글
         .map(lastDeletedComment -> {
@@ -229,7 +237,7 @@ public class CommentService {
   }
 
 
-  //특정 시간(localDateTime)이 현재 시간보다 5분 이상 지났는지 확인
+  //특정 시간(localDateTime)이 현재 시간보다 1분 이상 지났는지 확인
   public long getRemainingCooldownTime(LocalDateTime lastUpdatedTime) {
     LocalDateTime now = LocalDateTime.now();
     Duration duration = Duration.between(lastUpdatedTime, now);

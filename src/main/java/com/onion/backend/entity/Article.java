@@ -28,6 +28,9 @@ public class Article {
   @Column(nullable = false)
   private String content;  // 비밀번호
 
+  @Column(nullable = false)
+  private Long viewCount;
+
   @ManyToOne
   @JoinColumn(foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
   private User author;

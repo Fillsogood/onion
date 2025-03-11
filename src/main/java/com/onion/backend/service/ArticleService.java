@@ -154,7 +154,6 @@ public class ArticleService {
     article.setIsDeleted(true);
     articleRepository.save(article);
     return true;
-
   }
 
   // 사용자가 마지막으로 작성한 글이 5분 이상 지났는지 검증
