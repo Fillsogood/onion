@@ -35,6 +35,11 @@ dependencies {
 
 	implementation 'org.springframework.boot:spring-boot-starter-webflux' // WebClient 사용
 
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis' //redis
+	implementation 'org.springframework.session:spring-session-data-redis'
+
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
 	implementation 'io.netty:netty-resolver-dns-native-macos:4.1.86.Final:osx-aarch_64'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

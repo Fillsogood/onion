@@ -22,11 +22,11 @@ public class Article {
   private Long id;
 
   @Column(nullable = false)
-  private String title;  // 로그인 ID
+  private String title;
 
   @Lob
   @Column(nullable = false)
-  private String content;  // 비밀번호
+  private String content;
 
   @Column(nullable = false)
   private Long viewCount = 0L;

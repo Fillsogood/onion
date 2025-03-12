@@ -1,18 +1,31 @@
 package com.onion.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Entity
-@Table(name = "board")
+@Table(name = "Advertisment")
 @Getter
 @Setter
 @NoArgsConstructor
 @EntityListeners(org.springframework.data.jpa.domain.support.AuditingEntityListener.class)
-public class Board {
+public class Advertisment implements Serializable {
+
+  @Serial
+  private static final long serialVersionUID = 1L; // 직렬화 ID 추가
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,8 +34,31 @@ public class Board {
   @Column(nullable = false)
   private String title;
 
+  @Lob
   @Column(nullable = false)
-  private String description;
+  private String content = "";
+
+  @Column(nullable = false)
+  private Boolean isDeleted = false;
+
+  @Column(nullable = false)
+  private Boolean isVisble = true;
+
+  @Column(insertable = true)
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+  private LocalDateTime startDate;
+
+  @Column(insertable = true)
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+  private LocalDateTime endDate;
+
+  @Column(nullable = false)
+  private Integer clickCount = 0;
+
+  @Column(nullable = false)
+  private Integer viewCount = 0;
+
+
   @CreatedDate
   @Column(insertable = true)
   private LocalDateTime createdAt;  // 생성일 (최초 가입일)

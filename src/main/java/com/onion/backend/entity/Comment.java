@@ -20,7 +20,7 @@ public class Comment {
 
   @Lob
   @Column(nullable = false)
-  private String content;  // 비밀번호
+  private String content;
 
   @ManyToOne
   @JoinColumn(foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
