@@ -41,7 +41,7 @@ public class SecurityConfig {
     http
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests((requests) -> requests
-            .requestMatchers("/swagger-ui/**","/swagger-resources/**","/v3/api-docs/**", "/api/users/signUp", "/api/auth/login").permitAll()  // Swagger UI와 API 문서에 대한 접근 허용
+            .requestMatchers("/swagger-ui/**","/swagger-resources/**","/v3/api-docs/**", "/api/users/signUp", "/api/auth/login","/api/ads","/api/ads/**").permitAll()  // Swagger UI와 API 문서에 대한 접근 허용
             .anyRequest().authenticated()  // 나머지 요청은 인증된 사용자만 접근 가능
         )
         .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userDetailsService, jwtBlacklistService), UsernamePasswordAuthenticationFilter.class)  // 필터 등록

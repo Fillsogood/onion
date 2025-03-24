@@ -40,6 +40,10 @@ dependencies {
 
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+	implementation 'org.springframework.boot:spring-boot-starter-batch' //spring batch
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb' //mongoDB
+
 	implementation 'io.netty:netty-resolver-dns-native-macos:4.1.86.Final:osx-aarch_64'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
