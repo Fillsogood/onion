@@ -10,6 +10,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -32,6 +34,10 @@ public class User {
 
   @Column(nullable = false, length = 100)
   private String email;     // 이메일
+
+  @Convert(converter = DeviceListConverter.class)
+  @Column(columnDefinition = "json")
+  private List<Device> device = new ArrayList<>();
 
   private LocalDateTime lastLoginAt;  // 최근 로그인 시간
 
