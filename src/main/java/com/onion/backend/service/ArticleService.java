@@ -2,6 +2,7 @@ package com.onion.backend.service;
 
 import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.entity.Article;
+import com.onion.backend.entity.ArticleNotification;
 import com.onion.backend.entity.Board;
 import com.onion.backend.entity.User;
 import com.onion.backend.exception.ForbiddenException;
@@ -12,6 +13,7 @@ import com.onion.backend.repository.BoardRepository;
 import com.onion.backend.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,13 +33,20 @@ public class ArticleService {
   private final BoardRepository boardRepository;
   private final UserRepository userRepository;
   private final ElasticSearchService elasticSearchService;
+  private final RabbitMQSender rabbitMQSender;
 
   @Autowired
-  public ArticleService(ArticleRepository articleRepository, BoardRepository boardRepository, UserRepository userRepository, ElasticSearchService elasticSearchService) {
+  public ArticleService(ArticleRepository articleRepository,
+                        BoardRepository boardRepository,
+                        UserRepository userRepository,
+                        ElasticSearchService elasticSearchService,
+                        RabbitMQSender rabbitMQSender,
+                        RabbitTemplate rabbitTemplate) {
     this.articleRepository = articleRepository;
     this.boardRepository = boardRepository;
     this.userRepository = userRepository;
     this.elasticSearchService = elasticSearchService;
+    this.rabbitMQSender = rabbitMQSender;
   }
 
   @Transactional
@@ -45,11 +54,11 @@ public class ArticleService {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-    // 수정 시간 체크
-    long remainingTime = getRemainingWriteCooldown(userDetails.getUsername());
-    if (remainingTime > 0) {
-      throw new RateLimitException("You can edit this article in " + remainingTime + " minutes.");
-    }
+    // 시간 체크
+//    long remainingTime = getRemainingWriteCooldown(userDetails.getUsername());
+//    if (remainingTime > 0) {
+//      throw new RateLimitException("You can edit this article in " + remainingTime + " minutes.");
+//    }
 
     // 현재 로그인한 사용자 찾기
     User author = userRepository.findByUsername(userDetails.getUsername())
@@ -74,6 +83,10 @@ public class ArticleService {
             result -> System.out.println("Elasticsearch index success: " + result),
             error -> System.err.println("Elasticsearch index failed: " + error.getMessage()) //예외 처리 추가
         );
+    ArticleNotification articleNotification = new ArticleNotification();
+    articleNotification.setArticle_id(article.getId());
+    articleNotification.setUser_id(author.getId());
+    rabbitMQSender.sendMessage(articleNotification);
     return article;
   }
 

@@ -1,5 +1,6 @@
 package com.onion.backend.task;
 
+import com.onion.backend.dto.AdHistoryResult;
 import com.onion.backend.dto.AdViewHistoryResultDto;
 import com.onion.backend.service.AdvertismentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,9 @@ public class DailyStatTask {
 
   @Scheduled(cron = "0 0 0 * * ?")
   public void insertAdViewStatAtMidnight() {
-    List<AdViewHistoryResultDto> result = advertismentService.getAdViewHistoryGroupByAdId();
-    advertismentService.insertAdViewStat(result);
+    List<AdViewHistoryResultDto> viewResult = advertismentService.getAdViewHistoryGroupByAdId();
+    advertismentService.insertAdViewStat(viewResult);
+    List<AdHistoryResult> clicksResult = advertismentService.getAdClickHistoryGroupedByAdId();
+    advertismentService.insertAdClickStat(clicksResult);
   }
 }
