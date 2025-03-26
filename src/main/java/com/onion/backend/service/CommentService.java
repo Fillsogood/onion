@@ -2,11 +2,14 @@ package com.onion.backend.service;
 
 import com.onion.backend.dto.WriteCommentDto;
 import com.onion.backend.entity.Article;
+import com.onion.backend.entity.Board;
 import com.onion.backend.entity.Comment;
 import com.onion.backend.entity.User;
 import com.onion.backend.exception.ForbiddenException;
 import com.onion.backend.exception.RateLimitException;
 import com.onion.backend.exception.ResourcNotFoundException;
+import com.onion.backend.pojo.SendCommentNotification;
+import com.onion.backend.pojo.WriteComment;
 import com.onion.backend.repository.ArticleRepository;
 import com.onion.backend.repository.BoardRepository;
 import com.onion.backend.repository.UserRepository;
@@ -21,7 +24,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 
@@ -31,19 +36,24 @@ public class CommentService {
   private final BoardRepository boardRepository;
   private final UserRepository userRepository;
   private final CommentRepository commentRepository;
-
+  private final RabbitMQSender rabbitMQSender;
   private final ElasticSearchService elasticSearchService;
 
   @Autowired
-  public CommentService(ArticleRepository articleRepository, BoardRepository boardRepository, UserRepository userRepository, CommentRepository commentRepository, ElasticSearchService elasticSearchService) {
+  public CommentService(ArticleRepository articleRepository,
+                        BoardRepository boardRepository,
+                        UserRepository userRepository,
+                        CommentRepository commentRepository,
+                        ElasticSearchService elasticSearchService, RabbitMQSender rabbitMQSender) {
     this.articleRepository = articleRepository;
     this.boardRepository = boardRepository;
     this.userRepository = userRepository;
     this.commentRepository = commentRepository;
     this.elasticSearchService = elasticSearchService;
+    this.rabbitMQSender = rabbitMQSender;
   }
   @Transactional
-  public Comment writeComment(WriteCommentDto writeCommentDto, Long articleId) {
+  public Comment writeComment(WriteCommentDto writeCommentDto, Long articleId, Long boardId) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
@@ -56,6 +66,9 @@ public class CommentService {
     // 현재 로그인한 사용자 찾기
     User author = userRepository.findByUsername(userDetails.getUsername())
         .orElseThrow(() -> new ResourcNotFoundException("Author not found"));
+
+    // 게시판 존재 여부 확인
+    Board board = boardRepository.findById(boardId).orElseThrow(() -> new ResourcNotFoundException("Board not found"));
 
     // 게시글 존재 여부 확인
     Article article = articleRepository.findById(articleId)
@@ -72,6 +85,9 @@ public class CommentService {
     comment.setAuthor(author);
     comment.setContent(writeCommentDto.getContent());
     commentRepository.save(comment);
+    WriteComment writeComment = new WriteComment();
+    writeComment.setCommentId(comment.getId());
+    rabbitMQSender.sendMessage(writeComment);
     return comment;
   }
 
@@ -259,5 +275,32 @@ public class CommentService {
     Duration duration = Duration.between(lastUpdatedTime, now);
     long elapsedMinutes = duration.toMinutes();
     return Math.max(1 - elapsedMinutes, 0); // 1분 이상 지났으면 0 반환
+  }
+
+  @Transactional
+  public void sendCommentNotification(WriteComment writeComment) {
+    Long commentId = writeComment.getCommentId();
+
+    Long commentAuthorId = commentRepository.findCommentAuthorIdByCommentId(commentId);
+    Long articleAuthorId = commentRepository.findArticleAuthorIdByCommentId(commentId);
+    Long articleId = commentRepository.findArticleIdByCommentId(commentId);
+    List<Long> allCommentUserIds = commentRepository.findAllCommentUserIdsByArticleId(articleId);
+
+    Set<Long> userSet = new HashSet<>();
+    //댓글 작성한 본인
+    userSet.add(commentAuthorId);
+    //글 작성자
+    userSet.add(articleAuthorId);
+
+    //댓글 단 모든 유저
+    userSet.addAll(allCommentUserIds);
+
+
+    for (Long userId : userSet) {
+      SendCommentNotification sendCommentNotification = new SendCommentNotification();
+      sendCommentNotification.setCommentId(commentId);
+      sendCommentNotification.setUserId(userId);
+      rabbitMQSender.sendMessage(sendCommentNotification);
+    }
   }
 }

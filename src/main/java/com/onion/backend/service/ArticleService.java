@@ -2,7 +2,7 @@ package com.onion.backend.service;
 
 import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.entity.Article;
-import com.onion.backend.entity.ArticleNotification;
+import com.onion.backend.pojo.ArticleNotification;
 import com.onion.backend.entity.Board;
 import com.onion.backend.entity.User;
 import com.onion.backend.exception.ForbiddenException;

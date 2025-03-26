@@ -23,9 +23,9 @@ public class CommentController {
     this.commentService = commentService;
   }
 
-  @PostMapping("/{boardId}/articles/{articleId}")
-  public ResponseEntity<Comment> writeComment(@RequestBody WriteCommentDto writeCommentDto, @PathVariable Long articleId) {
-    return ResponseEntity.ok(commentService.writeComment(writeCommentDto,articleId));
+  @PostMapping("/{boardId}/articles/{articleId}/comment")
+  public ResponseEntity<Comment> writeComment(@RequestBody WriteCommentDto writeCommentDto, @PathVariable Long articleId, @PathVariable Long boardId) {
+    return ResponseEntity.ok(commentService.writeComment(writeCommentDto,articleId, boardId));
   }
 
 

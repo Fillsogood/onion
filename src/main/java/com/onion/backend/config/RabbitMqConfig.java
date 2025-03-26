@@ -33,6 +33,7 @@ public class RabbitMqConfig {
     SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
     factory.setConnectionFactory(connectionFactory);
     factory.setMessageConverter(jsonMessageConverter());
+    factory.setDefaultRequeueRejected(false); // 실패 메시지 재시도 방지
     return factory;
   }
 }
